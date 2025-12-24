@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pl" theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GITHUB EDITOR // BRUTALIST MONO</title>
+
+    <!-- Import Fonts: JetBrains Mono (UI & Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Import Font Awesome (Icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <i class="fas fa-terminal"></i>
+            <span>GitHub Editor <span style="color:var(--text-muted)">//</span> V2</span>
+        </div>
+
+        <div class="toolbar">
+            <button id="btn-view-table" class="btn active">
+                <i class="fas fa-table"></i> Tabela
+            </button>
+            <button id="btn-view-code" class="btn">
+                <i class="fas fa-code"></i> JSON
+            </button>
+
+            <div class="separator"></div>
+
+            <button id="btn-config" class="btn" title="Ustawienia GitHub">
+                <i class="fas fa-sliders"></i> Config
+            </button>
+            <button id="btn-pull" class="btn" title="Pobierz z GitHub">
+                <i class="fas fa-download"></i> Pull
+            </button>
+            <button id="btn-push" class="btn primary" title="Wyślij do GitHub">
+                <i class="fas fa-upload"></i> Push
+            </button>
+
+            <div class="separator"></div>
+
+            <button id="btn-theme" class="btn" title="Przełącz Motyw">
+                <i class="fas fa-circle-half-stroke"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- SCHEDULE VIEW -->
+        <div id="view-table" class="view-container active">
+            <div class="schedule-wrapper" id="schedule-container">
+                <!-- Table will be injected here -->
+            </div>
+        </div>
+
+        <!-- CODE VIEW -->
+        <div id="view-code" class="view-container">
+            <div class="editor-wrapper">
+                <div class="line-numbers" id="line-numbers">1</div>
+                <textarea id="json-editor" spellcheck="false"></textarea>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div style="display: flex; gap: 20px;">
+            <span id="status-repo">REPO: <span style="color: var(--highlight-color)">BRAK POŁĄCZENIA</span></span>
+            <span id="status-file">PLIK: -</span>
+        </div>
+        <div id="status-msg">GOTOWY</div>
+    </footer>
+
+    <!-- CONFIG MODAL -->
+    <div id="config-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>Konfiguracja API</span>
+                <i class="fas fa-times" style="cursor:pointer;" onclick="toggleModal('config-modal', false)"></i>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>GitHub Personal Access Token (PAT)</label>
+                    <input type="password" id="cfg-token" placeholder="ghp_xxxxxxxxxxxx">
+                </div>
+                <div class="form-group">
+                    <label>Właściciel Repozytorium</label>
+                    <input type="text" id="cfg-owner" placeholder="np. skokivPr">
+                </div>
+                <div class="form-group">
+                    <label>Nazwa Repozytorium</label>
+                    <input type="text" id="cfg-repo" placeholder="np. json-lista">
+                </div>
+                <div class="form-group">
+                    <label>Ścieżka do pliku</label>
+                    <input type="text" id="cfg-path" placeholder="np. w5g.json">
+                </div>
+                <div class="form-group">
+                    <label>Branch</label>
+                    <input type="text" id="cfg-branch" placeholder="main" value="main">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="toggleModal('config-modal', false)">ANULUJ</button>
+                <button class="btn primary" id="btn-save-config">ZAPISZ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION -->
+    <div id="notification">
+        <i class="fas fa-info-circle" id="notif-icon"></i>
+        <span id="notif-msg">Komunikat</span>
+    </div>
+
+    <script src="index.js"></script>
+
+</body>
+
+</html>
