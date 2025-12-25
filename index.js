@@ -4,9 +4,9 @@ const LS_DATA_KEY = 'gh_editor_data';
 
 let config = {
     token: '',
-    owner: '',
-    repo: '',
-    path: '',
+    owner: 'skokivpr',
+    repo: 'w5g.github.io',
+    path: 'w5g.json',
     branch: 'main'
 };
 
@@ -364,4 +364,5 @@ function showNotify(msg, type = 'info') {
 }
 
 // Start
+
 init();
