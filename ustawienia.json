@@ -40,7 +40,7 @@
     "color": "#ff8b55"
   },
   "M": {
-    "from": 25,
+    "from": 24,
     "label": "M",
     "cssVar": "bg-m",
     "colorDark": "#ffff00",
@@ -50,7 +50,7 @@
     "color": "#ffff00"
   },
   "Y": {
-    "from": 37,
+    "from": 35,
     "label": "Y",
     "cssVar": "bg-y",
     "colorDark": "#00ff00",
