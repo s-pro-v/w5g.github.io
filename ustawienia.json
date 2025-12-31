@@ -29,22 +29,22 @@
     "cssVar": "bg-k",
     "colorDark": "#ff8b55",
     "colorLight": "#c0392b",
-    "icon": "https://api.iconify.design/game-icons:rank-1.svg"
+    "icon": "https://api.iconify.design/game-icons:wolf-head.svg"
   },
   "M": {
-    "from": 25,
+    "from": 24,
     "label": "M",
     "cssVar": "bg-m",
     "colorDark": "#ffff00",
     "colorLight": "#b7950b",
-    "icon": "https://api.iconify.design/game-icons:rank-1.svg"
+    "icon": "https://api.iconify.design/game-icons:eagle-emblem.svg"
   },
   "Y": {
-    "from": 37,
+    "from": 35,
     "label": "Y",
     "cssVar": "bg-y",
     "colorDark": "#00ff00",
     "colorLight": "#196f3d",
-   "icon": "https://api.iconify.design/game-icons:rank-1.svg"
+    "icon": "https://api.iconify.design/game-icons:biohazard.svg"
   }
 }
