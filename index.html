@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><circle cx='50' cy='50' r='35' fill='none' stroke='%2300ff41' stroke-width='3'/><text x='50' y='60' font-size='40' font-family='monospace' font-weight='bold' text-anchor='middle' fill='%2300ff41'>W5G</text></svg>">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>W5G_TERMINAL_V2.2.0_CORE</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div class="scanline"></div>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">
+                <i class="fas fa-terminal"></i> W5G_CORE
+            </div>
+            <div class="sidebar-subtitle">
+                HYPERVISOR_OS // V2.2.0
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-item active" onclick="switchView('dashboard', this)">
+                <i class="fas fa-th-large"></i> DASHBOARD_HUD
+            </div>
+            <div class="nav-item" onclick="switchView('schedule', this)">
+                <i class="fas fa-calendar-alt"></i> HARMONOGRAM_MTX
+            </div>
+            <div class="nav-item" onclick="switchView('staff', this)">
+                <i class="fas fa-user-secret"></i> PERSONEL_DB
+            </div>
+            <div class="divider"></div>
+            <div class="nav-item" onclick="toggleModal('modal-groups', true)">
+                <i class="fas fa-users-cog"></i> GROUP_PROTOCOLS
+            </div>
+            <div class="nav-item" onclick="switchView('editor', this)">
+                <i class="fas fa-file-code"></i> RAW_JSON_DATA
+            </div>
+            <div class="nav-item" onclick="toggleModal('modal-about', true)">
+                <i class="fas fa-info-circle"></i> ABOUT_SYSTEM
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-full-width" onclick="toggleModal('modal-config', true)">
+                <i class="fas fa-sliders-h"></i> KONFIGURACJA
+            </button>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <span id="current-view-name" class="current-view-name">DASHBOARD_HUD</span>
+                <span class="separator"></span>
+                <span id="system-clock" class="system-clock">00:00:00</span>
+            </div>
+
+            <div class="top-bar-right">
+                <div class="status-indicator">
+                    STATUS: <span id="access-mode" class="highlight">READ_ONLY</span>
+                </div>
+                <button class="btn" id="btn-lock" onclick="toggleSecurityLock()"><i class="fas fa-lock"></i>
+                    ODBLOKUJ</button>
+                <button class="btn" onclick="syncData('pull')"><i class="fas fa-download"></i> PULL</button>
+                <button class="btn btn-active" onclick="syncData('push')"><i class="fas fa-upload"></i> PUSH</button>
+                <button class="btn-theme" onclick="toggleTheme()"><i class="fas fa-adjust"></i></button>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div id="loader" class="loading-curtain">
+                <i class="fas fa-circle-notch fa-spin fa-2x highlight"></i>
+                <div class="loading-text">ACCESSING_DATABASE...</div>
+            </div>
+
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-pane active">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-label">Zasoby ludzkie</div>
+                        <div class="stat-val" id="val-workers">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Dni w cyklu</div>
+                        <div class="stat-val" id="val-days">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Wymiar etatu (AVG)</div>
+                        <div class="stat-val" id="val-avg-hours">-- H</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Network Entropy</div>
+                        <div class="stat-val stat-val-stable">STABLE</div>
+                    </div>
+                </div>
+
+                <div class="panel-day">
+                    <div class="panel-day-content">
+                        <div class="day-info">
+                            <div class="panel-day-header-label" id="day-counter">Dzień -- / --</div>
+                            <h2 class="panel-day-header-title" id="current-date-display">WYBIERZ_DZIEŃ</h2>
+                        </div>
+                        <div class="mini-cal-wrapper" id="mini-calendar">
+                            <div class="mini-cal-header">
+                                <span id="mini-calendar-month-name">SECTOR_SELECT</span>
+                            </div>
+                            <!-- CHANGED: Dropdown instead of Grid -->
+                            <div class="day-selector-wrapper">
+                                <label class="form-label" style="margin-bottom: 5px;">DZIEŃ ROBOCZY:</label>
+                                <select id="day-selector" class="tech-select"
+                                    onchange="jumpToDay(parseInt(this.value))">
+                                    <!-- Options populated by JS -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-day-footer">
+                        <div class="btn-group-nav">
+                            <button class="btn" onclick="stepDay(-1)"><i class="fas fa-chevron-left"></i> PREV</button>
+                            <button class="btn" onclick="stepDay(1)">NEXT <i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="shifts-grid" class="shifts-container">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+
+            <!-- VIEW: SCHEDULE -->
+            <div id="view-schedule" class="view-pane">
+                <div class="table-wrap">
+                    <table id="main-schedule-table"></table>
+                </div>
+            </div>
+
+            <!-- VIEW: STAFF -->
+            <div id="view-staff" class="view-pane">
+                <div class="staff-layout">
+                    <div class="staff-sidebar">
+                        <div class="staff-search-container">
+                            <input type="text" id="staff-search" placeholder="SZUKAJ_PODMIOTU..."
+                                class="cell-input search">
+                        </div>
+                        <div id="staff-list" class="staff-list-scroll"></div>
+                    </div>
+                    <div id="staff-details" class="staff-details-panel">
+                        <div class="staff-details-panel-empty">BRAK_DANYCH //
+                            WYBIERZ_PRACOWNIKA</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: EDITOR -->
+            <div id="view-editor" class="view-pane">
+                <textarea id="json-editor" class="json-editor" spellcheck="false"></textarea>
+            </div>
+        </main>
+        <footer class="footer">
+            <div class="footer-item"><i class="fas fa-database"></i> SHA: <span id="footer-sha"
+                    class="footer-value">-------</span>
+            </div>
+            <div class="footer-item"><i class="fas fa-folder"></i> PATH: <span id="footer-path"
+                    class="footer-value">---</span>
+            </div>
+            <div class="footer-item footer-item-right"><i class="fas fa-clock"></i> LAST_SYNC:
+                <span id="footer-sync" class="footer-value">--:--:--</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- MODAL: CONFIG -->
+    <div id="modal-config" class="sys-overlay">
+        <div class="sys-modal">
+            <div class="sys-modal-header">
+                <span>CONFIG_ENVIRONMENT</span>
+                <i class="fas fa-times modal-close" onclick="toggleModal('modal-config', false)"></i>
+            </div>
+            <div class="sys-modal-body">
+                <div class="form-group">
+                    <label class="form-label">GITHUB_ACCESS_TOKEN</label>
+                    <input type="password" id="cfg-token" class="cell-input-config">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">REPOSITORY_PATH</label>
+                    <input type="text" id="cfg-repo" class="cell-input-config">
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-active" onclick="saveConfiguration()">SAVE_CHANGES</button>
+                    <button class="btn" onclick="toggleModal('modal-config', false)">DISCARD</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- MODAL: ABOUT -->
+    <div id="modal-about" class="sys-overlay">
+        <div class="sys-modal">
+            <div class="sys-modal-header">
+                <span>ABOUT_SYSTEM</span>
+                <i class="fas fa-times modal-close" onclick="toggleModal('modal-about', false)"></i>
+            </div>
+            <div class="sys-modal-body">
+                <div class="about-section">
+                    <h3 class="about-title">W5G Schedule Manager</h3>
+                    <p class="about-description">
+                        System zarządzania grafikami pracy dla zespołów operacyjnych.
+                    </p>
+                </div>
+                <div class="about-section">
+                    <label class="form-label">VERSION</label>
+                    <div class="about-version">v2.3.0</div>
+                </div>
+                <div class="about-footer">
+                    <button class="btn btn-active" onclick="toggleModal('modal-about', false)">CLOSE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sys-notify"><i class="fas fa-terminal"></i> SYSTEM_READY</div>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
