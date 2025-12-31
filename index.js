@@ -12,9 +12,9 @@ const defaultGroupSettings = {
     D: { from: 0, label: 'D', cssVar: 'bg-d', colorDark: '#ffad32', colorLight: '#d35400', icon: 'https://api.iconify.design/game-icons:rank-3.svg' },
     S: { from: 5, label: 'S', cssVar: 'bg-s', colorDark: '#0066ff', colorLight: '#0056b3', icon: 'https://api.iconify.design/game-icons:rank-2.svg' },
     L: { from: 10, label: 'L', cssVar: 'bg-l', colorDark: '#6fa1ff', colorLight: '#3178c6', icon: 'https://api.iconify.design/game-icons:rank-1.svg' },
-    K: { from: 12, label: 'K', cssVar: 'bg-k', colorDark: '#ff8b55', colorLight: '#c0392b', icon: 'https://api.iconify.design/game-icons:wolf-head.svg' },
-    M: { from: 25, label: 'M', cssVar: 'bg-m', colorDark: '#ffff00', colorLight: '#b7950b', icon: 'https://api.iconify.design/game-icons:eagle-emblem.svg' },
-    Y: { from: 37, label: 'Y', cssVar: 'bg-y', colorDark: '#00ff00', colorLight: '#196f3d', icon: 'https://api.iconify.design/game-icons:biohazard.svg' }
+    K: { from: 12, label: 'K', cssVar: 'bg-k', colorDark: '#ff8b55', colorLight: '#c0392b', icon: 'https://api.iconify.design/game-icons:rank-1.svg' },
+    M: { from: 25, label: 'M', cssVar: 'bg-m', colorDark: '#ffff00', colorLight: '#b7950b', icon: 'https://api.iconify.design/game-icons:rank-1.svg' },
+    Y: { from: 37, label: 'Y', cssVar: 'bg-y', colorDark: '#00ff00', colorLight: '#196f3d', icon: 'https://api.iconify.design/game-icons:rank-1.svg' }
 };
 
 // === DYNAMIC DATA STREAMS CONFIGURATION ===
@@ -1158,4 +1158,5 @@ function getCellClass(c) {
     if (c === "S") return "cell-s";
 
     return "";
+
 }
