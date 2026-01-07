@@ -380,40 +380,46 @@ body {
 
 /* --- LOGIC CLASSES: DASHBOARD BADGES (SB) --- */
 .sb-1 {
-    background: var(--color-day);
-    color: #000;
+    background: color-mix(in srgb, var(--color-day) 10%, transparent);
+    color: color-mix(in srgb, var(--color-day) 100%, transparent);
+    width: 100%;
 }
 
 .sb-2 {
-    background: var(--color-night);
-    color: #fff;
+    background: color-mix(in srgb, var(--color-night) 10%, transparent);
+    color: color-mix(in srgb, var(--color-night) 100%, transparent);
+    width: 100%;
 }
 
 .sb-p {
-    background: var(--color-park);
-    color: #000;
+    background: color-mix(in srgb, var(--color-park) 10%, transparent);
+    color: color-mix(in srgb, var(--color-park) 100%, transparent);
+    width: 100%;
 }
 
 .sb-n {
-    background: var(--color-day);
-    color: #000;
+    background: color-mix(in srgb, var(--color-day) 10%, transparent);
+    color: color-mix(in srgb, var(--color-day) 100%, transparent);
+    width: 100%;
 }
 
 /* Special Status Badges */
 .sb-x {
-    background: var(--color-crit);
-    color: #fff;
-    border: 1px solid var(--color-crit);
+    background: color-mix(in srgb, var(--color-crit) 10%, transparent);
+    color: color-mix(in srgb, var(--color-crit) 100%, transparent);
+    width: 100%;
 }
 
 .sb-u {
-    background: var(--color-vac);
-    color: #fff;
+    background: color-mix(in srgb, var(--color-vac) 10%, transparent);
+    color: color-mix(in srgb, var(--color-vac) 100%, transparent);
+    width: 100%;
 }
 
 .sb-s {
-    background: var(--color-edu);
-    color: #fff;
+    background: color-mix(in srgb, var(--color-edu) 10%, transparent);
+    color: color-mix(in srgb, var(--color-edu) 100%, transparent);
+    width: 100%;
 }
 
 /* --- LOGIC CLASSES: TEXT ONLY (TX) --- */
@@ -510,8 +516,7 @@ body {
 
 .calendar-day-cell:hover {
     background: var(--bg-card);
-    border-color: var(--primary);
-    box-shadow: inset 0 0 8px rgba(255, 115, 0, 0.1);
+    border-color: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .calendar-day-cell.weekend {
@@ -522,9 +527,8 @@ body {
 
 .calendar-day-cell.weekend:hover {
     background: var(--bg-input);
-    opacity: 0.85;
-    border-color: var(--primary);
-    box-shadow: inset 0 0 6px rgba(255, 115, 0, 0.15);
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .calendar-day-cell.empty {
@@ -1933,4 +1937,132 @@ input.cell-input:focus {
     background: rgba(255, 115, 0, 0.15);
     color: var(--primary);
     border-bottom-color: var(--primary);
+}
+
+
+/* === STAFF DETAILS STYLES === */
+.staff-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.staff-details-info {
+    flex: 1;
+}
+
+.staff-details-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.staff-details-name {
+    font-size: 1.5rem;
+    margin: 0.5rem 0;
+    color: var(--primary);
+}
+
+.staff-details-id {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+.staff-details-hours-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    text-align: center;
+    min-width: 120px;
+}
+
+.staff-details-hours-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.staff-details-hours-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+    font-family: var(--font-mono);
+}
+
+.staff-details-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.staff-details-legend i {
+    color: var(--primary);
+}
+
+.staff-details-legend-items {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.staff-details-status {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+
+
+.day {
+    width: 140px;
+}
+
+.night {
+    width: 140px;
+}
+
+.critical {
+    width: 140px;
+}
+
+.vacation {
+    width: 140px;
+}
+
+.training {
+    width: 140px;
+}
+
+.shift-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+
+.tag {
+    width: 100px;
+    margin-right: 10px;
 }
