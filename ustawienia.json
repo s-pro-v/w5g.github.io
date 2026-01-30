@@ -1,6 +1,6 @@
 {
   "D": {
-    "from": 0,
+    "from": 1,
     "label": "D",
     "cssVar": "bg-d",
     "colorDark": "#ffad32",
@@ -24,7 +24,7 @@
     "icon": "https://api.iconify.design/game-icons:rank-1.svg"
   },
   "K": {
-    "from": 13,
+    "from": 12,
     "label": "K",
     "cssVar": "bg-k",
     "colorDark": "#ff8b55",
