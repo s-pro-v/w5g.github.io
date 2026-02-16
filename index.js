@@ -23,7 +23,7 @@ let DATA_MODULES = [];
 
 let sys_config = {
     token: '',
-    owner: 'skokivpr',
+    owner: 's-pro-v',
     repo: 'w5g.github.io',
     path: 'w5g-grudzien.json', // Default fallback
     branch: 'main'
@@ -1128,7 +1128,7 @@ function createGroupsModal() {
 
 function saveConfiguration() {
     sys_config.token = document.getElementById('cfg-token').value;
-    sys_config.repo = document.getElementById('cfg-repo').value || 'skokivpr/w5g.github.io';
+    sys_config.repo = document.getElementById('cfg-repo').value || 's-pro-v/w5g.github.io';
     if (sys_config.repo.includes('/')) {
         const parts = sys_config.repo.split('/');
         sys_config.owner = parts[0];
@@ -1187,5 +1187,6 @@ function getCellClass(c) {
 
     return "";
 }
+
 
 
