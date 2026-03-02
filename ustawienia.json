@@ -20,7 +20,7 @@
     "color": "#0066ff"
   },
   "L": {
-    "from": 11,
+    "from": 10,
     "label": "L",
     "cssVar": "bg-l",
     "colorDark": "#6fa1ff",
