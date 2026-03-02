@@ -3,48 +3,60 @@
     "from": 0,
     "label": "D",
     "cssVar": "bg-d",
-    "colorDark": "#cc8a28",
+    "colorDark": "#ffad32",
     "colorLight": "#d35400",
-    "icon": "https://api.iconify.design/game-icons:rank-3.svg"
+    "icon": "https://api.iconify.design/game-icons:rank-3.svg?color=%23ffad32",
+    "to": 4,
+    "color": "#ffad32"
   },
   "S": {
     "from": 5,
     "label": "S",
     "cssVar": "bg-s",
-    "colorDark": "#0052cc",
+    "colorDark": "#0066ff",
     "colorLight": "#0056b3",
-    "icon": "https://api.iconify.design/game-icons:rank-2.svg"
+    "icon": "https://api.iconify.design/game-icons:rank-2.svg?color=%230066ff",
+    "to": 9,
+    "color": "#0066ff"
   },
   "L": {
-    "from": 10,
+    "from": 11,
     "label": "L",
     "cssVar": "bg-l",
-    "colorDark": "#5981cc",
+    "colorDark": "#6fa1ff",
     "colorLight": "#3178c6",
-    "icon": "https://api.iconify.design/game-icons:rank-1.svg"
+    "icon": "https://api.iconify.design/game-icons:rank-1.svg?color=%236fa1ff",
+    "to": 11,
+    "color": "#6fa1ff"
   },
   "K": {
-    "from": 12,
+    "from": 13,
     "label": "K",
     "cssVar": "bg-k",
-    "colorDark": "#cc6f44",
+    "colorDark": "#ff8b55",
     "colorLight": "#c0392b",
-    "icon": "https://api.iconify.design/game-icons:rank-1.svg"
+    "icon": "https://api.iconify.design/game-icons:rank-1.svg?color=%23ff8b55",
+    "to": 23,
+    "color": "#ff8b55"
   },
   "M": {
-    "from": 24,
+    "from": 26,
     "label": "M",
     "cssVar": "bg-m",
-    "colorDark": "#cccc00",
+    "colorDark": "#ffff00",
     "colorLight": "#b7950b",
-    "icon": "https://api.iconify.design/game-icons:rank-1.svg"
+    "icon": "https://api.iconify.design/game-icons:rank-1.svg?color=%23ffff00",
+    "to": 34,
+    "color": "#ffff00"
   },
   "Y": {
-    "from": 37,
+    "from": 38,
     "label": "Y",
     "cssVar": "bg-y",
-    "colorDark": "#00cc00",
+    "colorDark": "#00ff00",
     "colorLight": "#196f3d",
-    "icon": "https://api.iconify.design/game-icons:rank-1.svg"
+    "icon": "https://api.iconify.design/game-icons:rank-1.svg?color=%2300ff00",
+    "to": 58,
+    "color": "#00ff00"
   }
 }
