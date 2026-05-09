@@ -332,8 +332,7 @@ async function discoverDataStreams() {
         if (!res.ok) {
             console.warn(`[DISCOVERY_FAIL] HTTP ${res.status}`);
             DATA_MODULES = [
-                { id: 'LOCAL_DEC', label: 'GRUDZIEN (OFFLINE)', file: 'w5g-grudzien.json' },
-                { id: 'LOCAL_JAN', label: 'STYCZEN (OFFLINE)', file: 'w5g-styczen.json' }
+                { id: ' ', label: ' ', file: ' ' }
             ];
             return;
         }
