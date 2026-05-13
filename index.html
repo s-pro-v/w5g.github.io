@@ -2,6 +2,7 @@
 <html lang="pl" data-theme="dark">
 
 <head>
+    <!-- Emmet (referencja struktury): body>.scanline+aside.sidebar+div.main-wrapper>(header.top-bar+main.content-area+footer.footer) -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml"
@@ -19,12 +20,10 @@
 
     <aside class="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-title">
-                <i class="fas fa-terminal"></i> W5G_CORE
-            </div>
-            <div class="sidebar-subtitle">
-                HYPERVISOR_OS // V2.2.0
-            </div>
+            <w5g-sidebar-brand>
+                <span slot="title" class="sidebar-title"><i class="fas fa-terminal"></i> W5G_CORE</span>
+                <span slot="subtitle" class="sidebar-subtitle">HYPERVISOR_OS // V2.2.0</span>
+            </w5g-sidebar-brand>
         </div>
 
         <nav class="sidebar-nav">
@@ -85,22 +84,10 @@
             <!-- VIEW: DASHBOARD -->
             <div id="view-dashboard" class="view-pane active">
                 <div class="stats-row">
-                    <div class="stat-card">
-                        <div class="stat-label">Zasoby ludzkie</div>
-                        <div class="stat-val" id="val-workers">--</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Dni w cyklu</div>
-                        <div class="stat-val" id="val-days">--</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Wymiar etatu (AVG)</div>
-                        <div class="stat-val" id="val-avg-hours">-- H</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Network Entropy</div>
-                        <div class="stat-val stat-val-stable">STABLE</div>
-                    </div>
+                    <w5g-stat-card data-stat="workers" label="Zasoby ludzkie" value="--"></w5g-stat-card>
+                    <w5g-stat-card data-stat="days" label="Dni w cyklu" value="--"></w5g-stat-card>
+                    <w5g-stat-card data-stat="avg-hours" label="Wymiar etatu (AVG)" value="-- H"></w5g-stat-card>
+                    <w5g-stat-card label="Network Entropy" value="STABLE" stable></w5g-stat-card>
                 </div>
 
                 <div class="panel-day">
@@ -161,8 +148,38 @@
             </div>
 
             <!-- VIEW: EDITOR -->
-            <div id="view-editor" class="view-pane">
-                <textarea id="json-editor" class="json-editor" spellcheck="false"></textarea>
+            <div id="view-editor" class="view-pane json-view-root">
+                <div class="json-display-toolbar">
+                    <div class="json-toolbar-start">
+                        <span class="json-toolbar-label">RAW_JSON</span>
+                        <button type="button" class="btn json-mode-btn btn-active" data-mode="text"
+                            onclick="setJsonDisplayMode('text')" aria-pressed="true"><i class="fas fa-code"></i>
+                            ŹRÓDŁO</button>
+                        <button type="button" class="btn json-mode-btn" data-mode="tree"
+                            onclick="setJsonDisplayMode('tree')" aria-pressed="false"><i
+                                class="fas fa-folder-tree"></i> DRZEWO</button>
+                    </div>
+                    <span id="json-editor-hint" class="json-toolbar-meta" title=""></span>
+                </div>
+                <div class="json-display-body">
+                    <div id="json-mode-text" class="json-mode-panel">
+                        <div class="json-editor-shell">
+                            <div class="json-line-gutter" aria-hidden="true">
+                                <pre class="json-line-gutter-inner"><code id="json-line-numbers">1</code></pre>
+                            </div>
+                            <div class="json-editor-code-area">
+                                <pre class="json-editor-highlight" aria-hidden="true"><code
+                                        id="json-editor-hl-code"></code></pre>
+                                <textarea id="json-editor" class="json-editor" spellcheck="false"
+                                    aria-label="Źródło JSON grafiku"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="json-mode-tree" class="json-mode-panel" hidden>
+                        <div id="json-tree-viewport" class="json-tree-viewport" role="region"
+                            aria-label="Drzewo JSON"></div>
+                    </div>
+                </div>
             </div>
         </main>
         <footer class="footer">
@@ -192,7 +209,16 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">REPOSITORY_PATH</label>
-                    <input type="text" id="cfg-repo" class="cell-input-config">
+                    <input type="text" id="cfg-repo" class="cell-input-config" placeholder="s-pro-v/w5g.github.io">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">AUTH_XOR_PASS (json-lista dev/auth.json)</label>
+                    <input type="password" id="cfg-auth-xor-pass" class="cell-input-config" placeholder="xxor"
+                        autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn"
+                        onclick="importCredentialsFromRemoteAuth()">IMPORT_AUTH.JSON</button>
                 </div>
                 <div class="button-group">
                     <button class="btn btn-active" onclick="saveConfiguration()">SAVE_CHANGES</button>
@@ -228,7 +254,7 @@
 
     <div id="sys-notify"><i class="fas fa-terminal"></i> SYSTEM_READY</div>
 
-    <script src="index.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 
 
