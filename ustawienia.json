@@ -8,7 +8,7 @@
     "icon": "https://api.iconify.design/game-icons:rank-3.svg"
   },
   "S": {
-    "from": 5,
+    "from": 7,
     "label": "S",
     "cssVar": "bg-s",
     "colorDark": "#0052cc",
@@ -24,7 +24,7 @@
     "icon": "https://api.iconify.design/game-icons:rank-1.svg"
   },
   "K": {
-    "from": 11,
+    "from": 12,
     "label": "K",
     "cssVar": "bg-k",
     "colorDark": "#cc6f44",
@@ -32,7 +32,7 @@
     "icon": "https://api.iconify.design/game-icons:rank-1.svg"
   },
   "M": {
-    "from": 25,
+    "from": 28,
     "label": "M",
     "cssVar": "bg-m",
     "colorDark": "#cccc00",
@@ -40,7 +40,7 @@
     "icon": "https://api.iconify.design/game-icons:rank-1.svg"
   },
   "Y": {
-    "from": 38,
+    "from": 40,
     "label": "Y",
     "cssVar": "bg-y",
     "colorDark": "#00cc00",
