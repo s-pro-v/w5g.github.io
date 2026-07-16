@@ -67,20 +67,21 @@ let DATA_MODULES = [];
 let sys_config = {
   token: "",
   owner: "s-pro-v",
-  repo: "w5g.github.io",
-  path: "w5g-grudzien.json", // Default fallback
+  repo: "json-lista",
+  path: "mobile-grafik.json", // Default fallback
   branch: "main",
 };
 
 /** Zdalny manifest PAT / rep (json-lista). */
 const REMOTE_AUTH_JSON_URL =
   "https://cdn.jsdelivr.net/gh/s-pro-v/json-lista@main/dev/auth.json";
-const DEFAULT_REMOTE_REPO_FULL = "s-pro-v/w5g.github.io";
+const DEFAULT_REMOTE_REPO_FULL = "s-pro-v/json-lista";
 
 let remoteAuthRecords = null;
 
 let sys_state = {
   data: null,
+  allMonths: [],
   sha: null,
   isLocked: true,
   currentDayIdx: 0,
@@ -105,7 +106,7 @@ const SHIFT_MAP = {
   W: "WOLNE_WEEKEND",
 };
 
-const WEEKDAYS_MAP = { PN: 0, WT: 1, ŚR: 2, CZ: 3, PT: 4, SO: 5, ND: 6 };
+const WEEKDAYS_MAP = { PN: 0, WT: 1, ŚR: 2, SR: 2, CZ: 3, PT: 4, SO: 5, ND: 6 };
 const WEEKDAYS_HEADER = ["PN", "WT", "ŚR", "CZ", "PT", "SO", "ND"];
 const VALID_SHIFT_CODES = Object.keys(SHIFT_MAP);
 
@@ -673,6 +674,67 @@ const getGroupColorForTheme = (group) => {
   return currentTheme === "light" ? group.colorLight : group.colorDark;
 };
 
+function updateDataModulesFromMonths() {
+  if (!sys_state.allMonths || !sys_state.allMonths.length) {
+    DATA_MODULES = [];
+    return;
+  }
+  DATA_MODULES = sys_state.allMonths.map((m) => {
+    const monthName = m.meta.month.toUpperCase();
+    return {
+      id: monthName,
+      label: monthName,
+      file: monthName,
+    };
+  });
+}
+
+async function fetchMobileGrafik() {
+  const repoOwner = sys_config.owner || "s-pro-v";
+  const repoName = sys_config.repo === "w5g.github.io" ? "json-lista" : sys_config.repo;
+  const filePath = "mobile-grafik.json";
+  
+  if (sys_config.token) {
+    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}?ref=${sys_config.branch}`;
+    try {
+      const res = await fetch(apiUrl, {
+        headers: {
+          Authorization: `token ${sys_config.token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        sys_state.sha = json.sha;
+        const content = decodeURIComponent(
+          atob(json.content)
+            .split("")
+            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join(""),
+        );
+        return JSON.parse(content);
+      }
+    } catch (e) {
+      console.warn("GitHub API fetch failed, falling back to raw URL", e);
+    }
+  }
+
+  const rawUrl = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${sys_config.branch}/${filePath}?t=${new Date().getTime()}`;
+  try {
+    const res = await fetch(rawUrl);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn("Raw GitHub fetch failed, falling back to CDN", e);
+  }
+
+  const cdnUrl = `https://cdn.jsdelivr.net/gh/${repoOwner}/${repoName}@${sys_config.branch}/${filePath}`;
+  const res = await fetch(cdnUrl, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP_${res.status}`);
+  return await res.json();
+}
+
 // --- CORE FUNCTIONS ---
 async function init() {
   injectCoreStyles(); // <--- CRITICAL: Load CSS Engine
@@ -684,26 +746,10 @@ async function init() {
     /* offline / CORS — import nadal spróbuje ponownie */
   });
 
-  // 1. AUTO-DISCOVERY PROTOCOL
-  await discoverDataStreams();
-
-  // 2. Restore last active module or default
-  const lastModule = localStorage.getItem(LS_KEYS.ACTIVE_MODULE);
-  if (lastModule && DATA_MODULES.some((m) => m.file === lastModule)) {
-    sys_config.path = lastModule;
-  } else if (DATA_MODULES.length > 0) {
-    sys_config.path = DATA_MODULES[0].file;
-  }
-
+  // Load cache first so user sees data immediately
   loadCachedData();
-  startClock();
-  injectDataModuleSelector();
-  updateFooter();
 
-  if (!sys_state.data) {
-    sys_state.currentDayIdx = 0;
-  } else {
-    identifyMonths();
+  if (sys_state.data) {
     const today = new Date().getDate();
     const idx = sys_state.data.meta.days.findIndex(
       (d) => parseInt(d) === today,
@@ -711,6 +757,22 @@ async function init() {
     sys_state.currentDayIdx = idx !== -1 ? idx : 0;
     refreshUI();
   }
+
+  // 1. AUTO-DISCOVERY PROTOCOL (loads from CDN/GitHub and updates cache)
+  await discoverDataStreams();
+
+  if (sys_state.data) {
+    const today = new Date().getDate();
+    const idx = sys_state.data.meta.days.findIndex(
+      (d) => parseInt(d) === today,
+    );
+    sys_state.currentDayIdx = idx !== -1 ? idx : 0;
+  }
+
+  startClock();
+  injectDataModuleSelector();
+  updateFooter();
+  refreshUI();
 
   document
     .getElementById("staff-search")
@@ -936,50 +998,31 @@ function renderGroupConfigModal() {
 }
 
 async function discoverDataStreams() {
-  const apiUrl = `https://api.github.com/repos/${sys_config.owner}/${sys_config.repo}/contents/`;
-
   try {
-    const headers = { Accept: "application/vnd.github.v3+json" };
-    if (sys_config.token) {
-      headers["Authorization"] = `token ${sys_config.token}`;
-    }
+    notify("PULLING_SCHEDULE_DATA...", "info");
+    const allMonths = await fetchMobileGrafik();
+    if (Array.isArray(allMonths)) {
+      sys_state.allMonths = allMonths;
+      localStorage.setItem("w5g_all_months", JSON.stringify(allMonths));
+      updateDataModulesFromMonths();
 
-    const res = await fetch(apiUrl, { headers });
-    if (!res.ok) {
-      console.warn(`[DISCOVERY_FAIL] HTTP ${res.status}`);
-      DATA_MODULES = [{ id: " ", label: " ", file: " " }];
-      return;
-    }
+      // Determine the active module
+      const lastModule = localStorage.getItem(LS_KEYS.ACTIVE_MODULE);
+      const activeMonth = allMonths.find(m => m.meta.month.toUpperCase() === String(lastModule || "").toUpperCase()) || allMonths[0];
+      if (activeMonth) {
+        sys_state.data = activeMonth;
+        localStorage.setItem(LS_KEYS.DATA, JSON.stringify(activeMonth));
+        identifyMonths();
+      }
 
-    const files = await res.json();
-    if (!Array.isArray(files)) throw new Error("INVALID_REPO_STRUCTURE");
-
-    const cycleFiles = files.filter(
-      (f) =>
-        f.name.startsWith("w5g-") &&
-        f.name.endsWith(".json") &&
-        f.name !== "w5g.json",
-    );
-
-    DATA_MODULES = cycleFiles.map((f) => {
-      const coreName = f.name.replace(/^w5g-|.json$/g, "").toUpperCase();
-      return {
-        id: coreName,
-        label: `${coreName}`,
-        file: f.name,
-      };
-    });
-
-    DATA_MODULES.sort((a, b) => a.id.localeCompare(b.id));
-
-    if (DATA_MODULES.length > 0) {
-      notify(`DISCOVERED ${DATA_MODULES.length} DATA_STREAMS`, "success");
+      notify(`DISCOVERED ${allMonths.length} MONTHS`, "success");
+    } else {
+      throw new Error("INVALID_JSON_FORMAT");
     }
   } catch (e) {
     console.error("DISCOVERY_ERROR:", e);
-    DATA_MODULES = [
-      { id: "FALLBACK", label: "SYSTEM_OFFLINE", file: "w5g-grudzien.json" },
-    ];
+    notify(`FETCH_FAIL: ${e.message}`, "error");
+    loadCachedData();
   }
 }
 
@@ -1023,7 +1066,8 @@ function injectDataModuleSelector() {
     option.className = "option";
     option.dataset.value = mod.file;
     option.innerHTML = `<i class="fas fa-database"></i>${mod.label}`;
-    if (mod.file === sys_config.path) {
+    const activeModule = localStorage.getItem(LS_KEYS.ACTIVE_MODULE) || (sys_state.data ? sys_state.data.meta.month : "");
+    if (mod.file.toUpperCase() === String(activeModule).toUpperCase()) {
       option.classList.add("selected");
       trigger.querySelector("#selected-module-text").textContent = mod.label;
     }
@@ -1065,16 +1109,21 @@ function injectDataModuleSelector() {
 }
 
 async function switchDataModule(newPath) {
-  if (newPath === sys_config.path) return;
+  if (sys_state.data && newPath.toUpperCase() === sys_state.data.meta.month.toUpperCase()) return;
 
   notify(`MOUNTING_STREAM: ${newPath}...`, "info");
-  sys_config.path = newPath;
   localStorage.setItem(LS_KEYS.ACTIVE_MODULE, newPath);
 
-  sys_state.data = null;
-  sys_state.sha = null;
-
-  await syncData("pull");
+  const activeMonth = sys_state.allMonths.find(m => m.meta.month.toUpperCase() === String(newPath).toUpperCase());
+  if (activeMonth) {
+    sys_state.data = activeMonth;
+    localStorage.setItem(LS_KEYS.DATA, JSON.stringify(activeMonth));
+    identifyMonths();
+    refreshUI();
+    notify(`MOUNTED_STREAM: ${newPath}`, "success");
+  } else {
+    notify(`MONTH_NOT_FOUND: ${newPath}`, "error");
+  }
 }
 
 function updateFooter() {
@@ -1181,50 +1230,60 @@ function jumpToDay(absIdx) {
 async function syncData(mode) {
   if (!sys_config.token) return toggleModal("modal-config", true);
   setLoader(true);
-  const url = `https://api.github.com/repos/${sys_config.owner}/${sys_config.repo}/contents/${sys_config.path}`;
+  const repoOwner = sys_config.owner || "s-pro-v";
+  const repoName = sys_config.repo === "w5g.github.io" ? "json-lista" : sys_config.repo;
+  const filePath = "mobile-grafik.json";
+  const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
   try {
     if (mode === "pull") {
-      const res = await fetch(`${url}?ref=${sys_config.branch}`, {
-        headers: {
-          Authorization: `token ${sys_config.token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-      });
+      const allMonths = await fetchMobileGrafik();
+      if (Array.isArray(allMonths)) {
+        sys_state.allMonths = allMonths;
+        localStorage.setItem("w5g_all_months", JSON.stringify(allMonths));
+        updateDataModulesFromMonths();
 
-      // ERROR HANDLING UPGRADE: 404/422
-      if (res.status === 404 || res.status === 422) {
-        console.warn(
-          `[SYNC_FAIL] File '${sys_config.path}' on branch '${sys_config.branch}' unreachable (HTTP ${res.status}).`,
-        );
-        notify(
-          `REMOTE_FILE_INVALID: ${sys_config.path} (Check Branch?)`,
-          "error",
-        );
-        // Stop here to prevent crashing
-        throw new Error(`REMOTE_REF_INVALID_OR_MISSING (${res.status})`);
+        // Restore active month or pick first
+        const activeModule = localStorage.getItem(LS_KEYS.ACTIVE_MODULE);
+        const activeMonth = allMonths.find(m => m.meta.month.toUpperCase() === String(activeModule || "").toUpperCase()) || allMonths[0];
+        if (activeMonth) {
+          sys_state.data = activeMonth;
+          localStorage.setItem(LS_KEYS.DATA, JSON.stringify(activeMonth));
+          identifyMonths();
+        }
+        notify("DATA_PULL_SUCCESSFUL", "success");
+        updateFooter();
+        refreshUI();
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } else {
+      if (!sys_state.allMonths || sys_state.allMonths.length === 0) throw new Error("NO_DATA_TO_PUSH");
+      
+      // Update the current active month inside allMonths before pushing
+      if (sys_state.data) {
+        const idx = sys_state.allMonths.findIndex(m => m.meta.month.toUpperCase() === sys_state.data.meta.month.toUpperCase());
+        if (idx !== -1) {
+          sys_state.allMonths[idx] = sys_state.data;
+        }
       }
 
-      if (!res.ok) throw new Error(`HTTP_${res.status}`);
+      // Fetch latest SHA from GitHub content API to avoid conflicts
+      let sha = sys_state.sha;
+      try {
+        const getRes = await fetch(`${url}?ref=${sys_config.branch}`, {
+          headers: {
+            Authorization: `token ${sys_config.token}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        });
+        if (getRes.ok) {
+          const fileMeta = await getRes.json();
+          sha = fileMeta.sha;
+        }
+      } catch (e) {
+        console.warn("Could not fetch fresh SHA from GitHub, using cached", e);
+      }
 
-      const json = await res.json();
-      const content = decodeURIComponent(
-        atob(json.content)
-          .split("")
-          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join(""),
-      );
-      sys_state.sha = json.sha;
-      sys_state.data = JSON.parse(content);
-      localStorage.setItem(LS_KEYS.DATA, content);
-      identifyMonths();
-      notify("DATA_PULL_SUCCESSFUL", "success");
-      updateFooter();
-      refreshUI();
-
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-    } else {
-      if (!sys_state.data) throw new Error("NO_DATA_TO_PUSH");
-      const contentStr = JSON.stringify(sys_state.data, null, 2);
+      const contentStr = JSON.stringify(sys_state.allMonths, null, 2);
       const encoded = utf8StringToBase64(contentStr);
 
       const bodyPayload = {
@@ -1232,7 +1291,7 @@ async function syncData(mode) {
         content: encoded,
         branch: sys_config.branch,
       };
-      if (sys_state.sha) bodyPayload.sha = sys_state.sha;
+      if (sha) bodyPayload.sha = sha;
 
       const res = await fetch(url, {
         method: "PUT",
@@ -1245,10 +1304,15 @@ async function syncData(mode) {
       if (!res.ok) throw new Error("PUSH_FAILED");
       const result = await res.json();
       sys_state.sha = result.content.sha;
+      
+      localStorage.setItem("w5g_all_months", contentStr);
+      if (sys_state.data) {
+        localStorage.setItem(LS_KEYS.DATA, JSON.stringify(sys_state.data));
+      }
       updateFooter();
       notify("REMOTE_STORAGE_UPDATED", "success");
 
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   } catch (err) {
     if (!err.message.includes("REMOTE_REF")) {
@@ -1613,7 +1677,7 @@ function viewStaffDetails(idx) {
       (calendarGridHtml += `<div class="calendar-header-cell">${day}</div>`),
   );
 
-  const firstDayWeekday = meta.weekdays[0];
+  const firstDayWeekday = String(meta.weekdays[0] || "").toUpperCase().trim();
   let paddingDays = WEEKDAYS_MAP[firstDayWeekday];
   if (paddingDays === undefined) paddingDays = 0;
 
@@ -1689,6 +1753,13 @@ function viewStaffDetails(idx) {
 window.modifyShift = (wIdx, dIdx, val) => {
   if (!sys_state.data) return;
   sys_state.data.workers[wIdx].shifts[dIdx] = val.toUpperCase();
+  if (sys_state.allMonths) {
+    const idx = sys_state.allMonths.findIndex(m => m.meta.month.toUpperCase() === sys_state.data.meta.month.toUpperCase());
+    if (idx !== -1) {
+      sys_state.allMonths[idx] = sys_state.data;
+      localStorage.setItem("w5g_all_months", JSON.stringify(sys_state.allMonths));
+    }
+  }
   localStorage.setItem(LS_KEYS.DATA, JSON.stringify(sys_state.data));
   updateStats();
   renderDashboard();
@@ -1840,12 +1911,19 @@ function saveConfiguration() {
 
 function loadConfig() {
   const saved = localStorage.getItem(LS_KEYS.CONFIG);
-  if (!saved) return;
-  try {
-    const parsed = JSON.parse(saved);
-    sys_config = { ...sys_config, ...parsed };
-  } catch (e) {
-    console.warn("CONFIG_PARSE_FAIL", e);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      sys_config = { ...sys_config, ...parsed };
+    } catch (e) {
+      console.warn("CONFIG_PARSE_FAIL", e);
+    }
+  }
+  if (!sys_config.path || sys_config.path.startsWith("w5g-")) {
+    sys_config.path = "mobile-grafik.json";
+  }
+  if (!sys_config.repo || sys_config.repo === "w5g.github.io") {
+    sys_config.repo = "json-lista";
   }
 }
 
@@ -1867,11 +1945,20 @@ async function importCredentialsFromRemoteAuth() {
 }
 
 function loadCachedData() {
-  const saved = localStorage.getItem(LS_KEYS.DATA);
+  const saved = localStorage.getItem("w5g_all_months");
   if (saved) {
-    sys_state.data = JSON.parse(saved);
-    if (sys_state.data._sha) sys_state.sha = sys_state.data._sha;
-    identifyMonths();
+    try {
+      sys_state.allMonths = JSON.parse(saved);
+      updateDataModulesFromMonths();
+      const lastModule = localStorage.getItem(LS_KEYS.ACTIVE_MODULE);
+      const activeMonth = sys_state.allMonths.find(m => m.meta.month.toUpperCase() === String(lastModule || "").toUpperCase()) || sys_state.allMonths[0];
+      if (activeMonth) {
+        sys_state.data = activeMonth;
+        identifyMonths();
+      }
+    } catch (e) {
+      console.error("LOAD_CACHED_DATA_FAIL", e);
+    }
   }
 }
 
