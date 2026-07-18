@@ -47,8 +47,47 @@ const defaultGroupSettings = {
       "code": "y",
       "name": "SEKCJA Y"
     }
-   ]
-  };
+  ]
+};
+
+const groupMetadata = {
+  d: {
+    cssVar: "bg-d",
+    colorDark: "#cc8a28",
+    colorLight: "#d35400",
+    icon: "https://api.iconify.design/game-icons:rank-3.svg",
+  },
+  s: {
+    cssVar: "bg-s",
+    colorDark: "#0052cc",
+    colorLight: "#0056b3",
+    icon: "https://api.iconify.design/game-icons:rank-2.svg",
+  },
+  l: {
+    cssVar: "bg-l",
+    colorDark: "#5981cc",
+    colorLight: "#3178c6",
+    icon: "https://api.iconify.design/game-icons:rank-1.svg",
+  },
+  k: {
+    cssVar: "bg-k",
+    colorDark: "#cc6f44",
+    colorLight: "#c0392b",
+    icon: "https://api.iconify.design/game-icons:rank-1.svg",
+  },
+  m: {
+    cssVar: "bg-m",
+    colorDark: "#cccc00",
+    colorLight: "#b7950b",
+    icon: "https://api.iconify.design/game-icons:rank-1.svg",
+  },
+  y: {
+    cssVar: "bg-y",
+    colorDark: "#00cc00",
+    colorLight: "#196f3d",
+    icon: "https://api.iconify.design/game-icons:rank-1.svg",
+  },
+};
 
 // === DYNAMIC DATA STREAMS CONFIGURATION ===
 // System automatically scans the repo for files matching 'w5g-*.json' pattern.
@@ -775,30 +814,24 @@ async function init() {
 }
 
 // === LOGIC REPAIRED: DYNAMIC GROUP RANGES ===
-let groupSettings = { ...defaultGroupSettings };
+let groupSettings = JSON.parse(JSON.stringify(defaultGroupSettings));
 
 function loadGroupSettings() {
   const saved = localStorage.getItem(LS_KEYS.GROUPS);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      Object.keys(defaultGroupSettings).forEach((key) => {
-        if (parsed[key]) {
-          groupSettings[key] = { ...defaultGroupSettings[key], ...parsed[key] };
-
-          if (!groupSettings[key].colorLight) {
-            groupSettings[key].colorLight =
-              parsed[key].color || defaultGroupSettings[key].colorLight;
-          }
-          if (!groupSettings[key].colorDark) {
-            groupSettings[key].colorDark =
-              parsed[key].color || defaultGroupSettings[key].colorDark;
-          }
-        }
-      });
+      if (parsed && Array.isArray(parsed.groups)) {
+        groupSettings = parsed;
+      } else {
+        groupSettings = JSON.parse(JSON.stringify(defaultGroupSettings));
+      }
     } catch (e) {
       console.error("GROUP_CONFIG_LOAD_FAIL", e);
+      groupSettings = JSON.parse(JSON.stringify(defaultGroupSettings));
     }
+  } else {
+    groupSettings = JSON.parse(JSON.stringify(defaultGroupSettings));
   }
   applyThemeSpecificColors();
 }
@@ -807,10 +840,12 @@ function applyThemeSpecificColors() {
   const currentTheme =
     document.documentElement.getAttribute("data-theme") || "dark";
 
-  Object.values(groupSettings).forEach((g) => {
-    const color = currentTheme === "light" ? g.colorLight : g.colorDark;
-    if (color) {
-      document.documentElement.style.setProperty(`--${g.cssVar}`, color);
+  const grpList = groupSettings.groups || defaultGroupSettings.groups || [];
+  grpList.forEach((g) => {
+    const meta = groupMetadata[g.code.toLowerCase()] || {};
+    const color = currentTheme === "light" ? meta.colorLight : meta.colorDark;
+    if (color && meta.cssVar) {
+      document.documentElement.style.setProperty(`--${meta.cssVar}`, color);
     }
   });
 }
@@ -820,22 +855,16 @@ function getWorkerGroup(id) {
   const pid = parseInt(id, 10);
   if (isNaN(pid)) return null;
 
-  const sortedKeys = Object.keys(groupSettings).sort(
-    (a, b) => groupSettings[a].from - groupSettings[b].from,
-  );
+  const grpList = groupSettings.groups || defaultGroupSettings.groups || [];
+  const found = grpList.find(g => pid >= g.min && pid <= g.max);
+  if (!found) return null;
 
-  for (let i = 0; i < sortedKeys.length; i++) {
-    const key = sortedKeys[i];
-    const currentGrp = groupSettings[key];
-
-    const nextKey = sortedKeys[i + 1];
-    const nextFrom = nextKey ? groupSettings[nextKey].from : Infinity;
-
-    if (pid >= currentGrp.from && pid < nextFrom) {
-      return { ...currentGrp, id: key };
-    }
-  }
-  return null;
+  const meta = groupMetadata[found.code.toLowerCase()] || {};
+  return {
+    ...found,
+    ...meta,
+    label: found.code.toUpperCase()
+  };
 }
 
 async function syncGroupSettingsToGithub() {
@@ -899,26 +928,30 @@ async function saveGroupConfig() {
   if (!container) return;
 
   const rows = container.querySelectorAll(".group-row");
+  const grpList = [];
 
   rows.forEach((row) => {
-    const id = row.dataset.id;
-    const fromInput = row.querySelector(".inp-from");
-    const colorDarkInput = row.querySelector(".inp-color-dark");
-    const colorLightInput = row.querySelector(".inp-color-light");
+    const code = row.dataset.code;
+    const minInput = row.querySelector(".inp-min");
+    const maxInput = row.querySelector(".inp-max");
 
-    if (groupSettings[id]) {
-      if (fromInput) {
-        const val = parseInt(fromInput.value);
-        if (!isNaN(val)) groupSettings[id].from = val;
-      }
-      if (colorDarkInput) {
-        groupSettings[id].colorDark = colorDarkInput.value;
-      }
-      if (colorLightInput) {
-        groupSettings[id].colorLight = colorLightInput.value;
-      }
+    if (minInput && maxInput) {
+      const minVal = parseInt(minInput.value, 10);
+      const maxVal = parseInt(maxInput.value, 10);
+      
+      const existingGrp = (groupSettings.groups || []).find(g => g.code === code);
+      const name = existingGrp ? existingGrp.name : `SEKCJA ${code.toUpperCase()}`;
+
+      grpList.push({
+        min: isNaN(minVal) ? 0 : minVal,
+        max: isNaN(maxVal) ? 999999 : maxVal,
+        code: code,
+        name: name
+      });
     }
   });
+
+  groupSettings = { groups: grpList };
 
   localStorage.setItem(LS_KEYS.GROUPS, JSON.stringify(groupSettings));
   applyThemeSpecificColors();
@@ -927,7 +960,7 @@ async function saveGroupConfig() {
   await syncGroupSettingsToGithub();
 
   toggleModal("modal-groups", false);
-  notify("MATRIX_UPDATED: Colors & Ranges Synced", "success");
+  notify("MATRIX_UPDATED: Ranges Synced", "success");
   refreshUI();
 }
 
@@ -935,49 +968,31 @@ function renderGroupConfigModal() {
   const container = document.getElementById("groups-editor-container");
   if (!container) return;
 
-  const sortedEntries = Object.entries(groupSettings).sort(
-    (a, b) => a[1].from - b[1].from,
-  );
+  const grpList = groupSettings.groups || [];
 
   container.innerHTML = `
                 <form id="groups-form" style="display: flex; flex-direction: column; gap: 10px;">
                     <div style="font-size:10px; color:var(--text-secondary); margin-bottom:10px;">
-                        SYSTEM AUTO-CALCULATES RANGES: [FROM] -> [NEXT_FROM - 1]
+                        EDIT GROUP RANGES (MIN - MAX)
                     </div>
-                    <div style="display:grid; grid-template-columns: 40px 1fr 1fr 60px 60px; gap:10px; font-size:14px; font-weight:bold; color:var(--text-secondary); padding: 0 12px;">
-                        <span>ID</span>
-                        <span>FROM (ID)</span>
-                        <span>TO (AUTO)</span>
-                        <span>NIGHT</span>
-                        <span>DAY</span>
+                    <div style="display:grid; grid-template-columns: 80px 1fr 1fr; gap:10px; font-size:14px; font-weight:bold; color:var(--text-secondary); padding: 0 12px;">
+                        <span>CODE</span>
+                        <span>MIN</span>
+                        <span>MAX</span>
                     </div>
-                    ${sortedEntries
-                      .map(([key, conf], index) => {
-                        const nextEntry = sortedEntries[index + 1];
-                        const endRange = nextEntry
-                          ? nextEntry[1].from - 1
-                          : "∞";
-
+                    ${grpList
+                      .map((grp) => {
+                        const meta = groupMetadata[grp.code.toLowerCase()] || {};
                         return `
-                        <div class="group-row" data-id="${key}" style="display:grid; grid-template-columns: 40px 1fr 1fr 60px 60px; gap:10px; align-items:center; background:var(--bg-input); padding:12px; border:1px solid var(--border-color);">
-                            <div class="group-id-badge" style="background:var(--${conf.cssVar}); color:var(--text-badge); font-weight:bold; text-align:center; padding:2px;">${key}</div>
+                        <div class="group-row" data-code="${grp.code}" style="display:grid; grid-template-columns: 80px 1fr 1fr; gap:10px; align-items:center; background:var(--bg-input); padding:12px; border:1px solid var(--border-color);">
+                            <div class="group-id-badge" style="background:var(--${meta.cssVar || 'bg-d'}); color:var(--text-badge); font-weight:bold; text-align:center; padding:2px;">${grp.code.toUpperCase()}</div>
 
                             <div>
-                                <input type="number" class="inp-from cell-input" value="${conf.from}" style="width: 100%; border:1px solid var(--border-color); background:var(--bg-card); text-align: left; padding-left: 5px;">
+                                <input type="number" class="inp-min cell-input" value="${grp.min}" style="width: 100%; border:1px solid var(--border-color); background:var(--bg-card); text-align: left; padding-left: 5px;">
                             </div>
 
-                            <div style="font-size:12px; font-weight:bold; color:var(--text-secondary); opacity: 0.7; padding-left:5px;">
-                                -> ${endRange}
-                            </div>
-
-                            <!-- DARK MODE COLOR -->
-                            <div style="display:flex; justify-content:center;">
-                                <input type="color" class="inp-color-dark" value="${conf.colorDark}" title="NIGHT MODE (Dark Theme)" style="border:none; background:none; width:30px; height:30px; cursor:pointer;">
-                            </div>
-
-                            <!-- LIGHT MODE COLOR -->
-                            <div style="display:flex; justify-content:center;">
-                                <input type="color" class="inp-color-light" value="${conf.colorLight}" title="DAY MODE (Light Theme)" style="border:none; background:none; width:30px; height:30px; cursor:pointer;">
+                            <div>
+                                <input type="number" class="inp-max cell-input" value="${grp.max}" style="width: 100%; border:1px solid var(--border-color); background:var(--bg-card); text-align: left; padding-left: 5px;">
                             </div>
                         </div>
                     `;
@@ -1136,16 +1151,17 @@ function identifyMonths() {
   const { days, months } = sys_state.data.meta;
   sys_state.monthRanges = [];
 
-  const activeMod = DATA_MODULES.find((m) => m.file === sys_config.path);
+  const activeModuleKey = sys_state.data ? sys_state.data.meta.month : "";
+  const activeMod = DATA_MODULES.find((m) => m.file.toUpperCase() === String(activeModuleKey).toUpperCase());
   const defaultName = activeMod
-    ? activeMod.label.replace("", "")
-    : "UNKNOWN_CYCLE";
+    ? activeMod.label
+    : (sys_state.data && sys_state.data.meta.month ? sys_state.data.meta.month : "UNKNOWN_CYCLE");
 
   let rangeStart = 0;
   let monthIdx = 0;
 
   for (let i = 1; i < days.length; i++) {
-    if (days[i] < days[i - 1]) {
+    if (parseInt(days[i], 10) < parseInt(days[i - 1], 10)) {
       const metaName = months && months[monthIdx] ? months[monthIdx] : null;
       const finalName = metaName || `${defaultName} ${monthIdx + 1}`;
 
@@ -1351,8 +1367,9 @@ function renderDashboard() {
   const weekday = meta.weekdays[idx];
   const dayNum = meta.days[idx];
 
-  const activeMod = DATA_MODULES.find((m) => m.file === sys_config.path);
-  const moduleLabel = activeMod ? activeMod.label : sys_config.path;
+  const activeModuleKey = sys_state.data ? sys_state.data.meta.month : "";
+  const activeMod = DATA_MODULES.find((m) => m.file.toUpperCase() === String(activeModuleKey).toUpperCase());
+  const moduleLabel = activeMod ? activeMod.label : (sys_state.data ? sys_state.data.meta.month : sys_config.path);
 
   document.getElementById("day-counter").textContent =
     `DZIEŃ ROBOCZY [${idx + 1}/${meta.days.length}]`;
